@@ -1,0 +1,300 @@
+# Combining marks - triple grave+acute+circumflex on a
+à́̂_stack3
+
+# Combining marks - five diacritics on single o
+ò́̈̂̃_stack5
+
+# Combining marks - Devanagari vowel sign stack
+कािी_deva_stack
+
+# Combining marks - CJK with combining enclosing circle
+東⃝⃞_cjk_enclosed
+
+# Combining marks - Arabic letter with four diacritics
+مَُِّ_arabic_stack4
+
+# Combining marks - Hebrew with cantillation marks
+אֽׁׂׄ_hebrew_cantil
+
+# Combining marks - tilde below and above on z
+z̰̥̃_tilde_stacked
+
+# Combining marks - eight-diacritic max stack on e
+è́̂̃̄̆̇̈_max8
+
+# Bidi - RIGHT-TO-LEFT OVERRIDE makes text appear reversed
+‮test_rtlo
+
+# Bidi - LRM marks sandwiching Arabic text
+‏مرحبا‎_lrm_arabic
+
+# Bidi - RIGHT-TO-LEFT EMBEDDING
+‫hello_rle
+
+# Bidi - FIRST STRONG ISOLATE wrapping mixed text
+⁨test123⁩_fsi
+
+# Bidi - POP DIRECTIONAL FORMATTING embedded mid-name
+abc‬def_pdf_mid
+
+# Bidi - LEFT-TO-RIGHT ISOLATE with Arabic inside
+⁦مرحبا⁩_lri
+
+# Bidi - reversed-extension illusion via RLO
+exec‮gnp.exe_reversal
+
+# Bidi - ALM Arabic Letter Mark invisible prefix
+؜data_alm
+
+# Zero-width - ZERO WIDTH SPACE in middle of name
+test​dir_zwsp
+
+# Zero-width - ZERO WIDTH NON-JOINER between each Hindi letter
+ह‌ि‌न‌द‌ी_zwnj
+
+# Zero-width - ZERO WIDTH JOINER sequence man woman girl
+man‍woman‍girl_zwj
+
+# Zero-width - WORD JOINER U+2060 invisible chars
+data⁠⁠files_wj
+
+# Zero-width - FUNCTION APPLICATION U+2061 invisible
+f⁡x⁡y_funcapply
+
+# Zero-width - INVISIBLE TIMES U+2062
+a⁢b⁢c_invtimes
+
+# Zero-width - SOFT HYPHEN U+00AD invisible hyphen
+pass­word_softhyphen
+
+# Zero-width - BYTE ORDER MARK as non-first char in name
+data﻿files_bom_mid
+
+# Emoji ZWJ - man plus ZWJ plus laptop computer
+👨‍💻_dev_zwj
+
+# Emoji ZWJ - family man+woman+girl+boy sequence
+👨‍👩‍👧‍👦_family
+
+# Emoji ZWJ - flag sequence Australia via regional indicators
+🇦🇺_flag_au
+
+# Emoji ZWJ - woman plus ZWJ plus wrench mechanic
+👩‍🔧_mechanic
+
+# Emoji modifier - raised fist with dark skin tone
+👊🏿_fist_dark
+
+# Emoji - variation selector-15 text presentation telephone
+☎︎_phone_text_vs
+
+# Emoji - variation selector-16 emoji presentation telephone
+☎️_phone_emoji_vs
+
+# Emoji - keycap sequence one plus combining enclosing keycap
+1⃣_keycap_one
+
+# Confusable - Cyrillic letters mixed with Latin lookalikes
+раssword_cyril
+
+# Confusable - Greek Eta and Epsilon mixed with Latin
+ΗеΙΙο_Wor1d_greek
+
+# Confusable - mathematical letterlike symbols as directory name
+ℝℕℤ_ℂℍℙℚ_mathlt
+
+# Confusable - enclosed alphanumerics circled letters a-i
+ⓐⓑⓒⓓⓔ_ⓕⓖⓗⓘ_circ
+
+# Confusable - fullwidth Latin letter A mixed with ASCII
+Ａdmin_fullwidth_A
+
+# Confusable - Cherokee syllables resembling Latin letters
+ᎶᎢᎬᏙᎩ_cherokee
+
+# Normalization NFC - precomposed e-acute U+00E9
+café_NFC
+
+# Normalization NFD - decomposed e plus combining acute
+café_NFD
+
+# Normalization - Korean Hangul decomposed into conjoining jamo
+각_jamo_decomp
+
+# Normalization - ligature fi fl ff expand under NFKD
+ﬁﬂﬀ_ligatures
+
+# Normalization - Arabic presentation forms Lam-Alef isolated
+ﻻﻼ_arab_pres
+
+# Normalization - small form variants less-than equals-sign
+﹤﹥﹦_small_forms
+
+# SMP - Linear B syllabary first five signs
+𐀀𐀁𐀂𐀃𐀄_linearB
+
+# SMP - Egyptian Hieroglyphs first four signs
+𓀀𓀁𓀂𓀃_hieroglyphs
+
+# SMP - Gothic script first five letters
+𐌰𐌱𐌲𐌳𐌴_gothic
+
+# SMP - Deseret alphabet first five letters
+𐐀𐐁𐐂𐐃𐐄_deseret
+
+# SMP - Shavian script first five letters
+𐑐𐑑𐑒𐑓𐑔_shavian
+
+# SMP - Old Italic script first five letters
+𐌀𐌁𐌂𐌃𐌄_italic
+
+# SMP - Cuneiform first four signs
+𒀀𒀁𒀂𒀃_cuneiform
+
+# SMP - Mathematical Fraktur capital letters A through E
+𝔄𝔅ℭ𝔇𝔈_fraktur
+
+# SMP - Mathematical Script capital letters A through E
+𝒜ℬ𝒞𝒟ℰ_script
+
+# SMP - Mathematical Double-Struck capital letters A through E
+𝔸𝔹ℂ𝔻𝔼_dblstruck
+
+# Tags block - LANGUAGE TAG U+E0001 invisible in name
+doc󠀁files_langtag
+
+# Tags block - invisible tag sequence spells ACEF
+test󠁁󠁃󠁅󠁆_tags
+
+# Non-character - U+FDD0 Arabic presentations non-char
+test﷐_nonchar_fdd0
+
+# Non-character - U+FFFE byte-order non-character
+test￾_nonchar_fffe
+
+# Non-character - U+FFFF permanent non-character
+test￿_nonchar_ffff
+
+# Non-character - U+1FFFE SMP non-character
+test🿾_nonchar_1fffe
+
+# PUA - BMP Private Use Area U+E000 to U+E002
+_pua_bmp
+
+# PUA - Supplementary Private Use Area-A start
+󰀀󰀁_pua_spuaA
+
+# PUA - Supplementary Private Use Area-B start
+􀀀􀀁_pua_spuaB
+
+# PUA - mix of BMP PUA and Supplementary PUA chars
+󰁂_pua_mix
+
+# Whitespace - NO-BREAK SPACE U+00A0 between words
+Test Dir_nbsp
+
+# Whitespace - EN SPACE U+2002
+Test Dir_en_space
+
+# Whitespace - EM SPACE U+2003
+Test Dir_em_space
+
+# Whitespace - IDEOGRAPHIC SPACE U+3000 after CJK
+文　Test_ideo_space
+
+# Whitespace - THIN SPACE U+2009
+Test Dir_thin
+
+# Whitespace - HAIR SPACE U+200A
+Test Dir_hair
+
+# Whitespace - FIGURE SPACE U+2007
+Test Dir_figure
+
+# Whitespace - LINE SEPARATOR U+2028 in middle of name
+line sep_ls
+
+# Ancient - Elder Futhark runes first six characters
+ᚠᚢᚦᚨᚱᚲ_futhark
+
+# Ancient - Ogham letters first five
+ᚁᚂᚃᚄᚅ_ogham
+
+# Ancient - Phoenician script first five letters
+𐤀𐤁𐤂𐤃𐤄_phoenician
+
+# Ancient - Ugaritic cuneiform first five
+𐎀𐎁𐎂𐎃𐎄_ugaritic
+
+# Ancient - Old Persian cuneiform first five
+𐎠𐎡𐎢𐎣𐎤_oldpersian
+
+# Ancient - Osmanya script from Somalia first five
+𐒀𐒁𐒂𐒃𐒄_osmanya
+
+# Security - division slash U+2215 lookalike for path separator
+etc∕passwd_divslash
+
+# Security - right-to-left mark invisible prefix before system32
+‏system32_rtlm
+
+# Security - homoglyph mix Cyrillic plus Greek plus Latin
+pаαγe_homoglyph
+
+# Security - PARAGRAPH SEPARATOR U+2029 in directory name
+para sep_ps
+
+# Security - zero-width space making two names visually identical
+admin​files_zwsp_dupe
+
+# Security - combining strikethrough over all chars in name
+safe̶̶name_struck
+
+# 150 ASCII - plain numbers
+123456789112345678921234567893123456789412345678951234567896123456789712345678981234567899123456789012345678911234567892123456789312345678941234567895
+
+# Extreme length - 98 Korean Hangul syllables
+가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하
+
+# Extreme length - 60 emoji requires 120 UTF-16 code units
+😀😁😂😃😄😅😆😇😈😉😀😁😂😃😄😅😆😇😈😉😀😁😂😃😄😅😆😇😈😉😀😁😂😃😄😅😆😇😈😉😀😁😂😃😄😅😆😇😈😉😀😁😂😃😄😅😆😇😈😉
+
+# Extreme length - 127 CJK characters exactly 254 UTF-16 bytes
+一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七
+
+# Edge case - Musical symbols clef and note from SMP
+𝄞𝄢𝄡_music
+
+# Edge case - Mahjong tiles from SMP emoji block
+🀄🀇🀈🀉_mahjong
+
+# Edge case - Playing card suits with variation selector
+♠️♥️♦️♣️_cards
+
+# Edge case - Superscript and subscript digits mixed
+²³⁴⁵_sup_₂₃₄₅_sub
+
+# Mixed chaos - LRM plus Arabic plus combining plus ZWSP plus globe
+‏مَر​ح🌍_chaos1
+
+# Mixed chaos - Cyrillic plus Latin confusable plus ZWJ plus boom
+мiх‍ed💥_chaos2
+
+# Mixed chaos - Hebrew RTL plus bidi override plus fire emoji
+‫שלום‬🔥_chaos3
+
+# Mixed chaos - Devanagari plus combining mark plus ZWSP plus Latin
+प्रि​या_chaos4
+
+# Mixed chaos - SMP Fraktur plus combining marks plus zero-width
+𝔕̀​‌ello_chaos5
+
+# Mixed chaos - all zero-width invisible chars stacked together
+test​‌‍⁠﻿dir_allzw
+
+# Mixed chaos - five-script mix CJK Korean Devanagari Greek Latin
+αβγ测시हि_5scripts
+
+# Mixed chaos - emoji plus RTL bidi plus Arabic combining marks
+🎭‍‫اَل‬_artchaos
+

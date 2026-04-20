@@ -1,0 +1,299 @@
+# Chinese Simplified - common directory name for Documents
+文档
+
+# Chinese Simplified - capital city Beijing
+北京
+
+# Chinese Simplified - personal name Li Wei
+李伟
+
+# Chinese Simplified - Downloads directory
+下载
+
+# Chinese Simplified - city Shanghai
+上海
+
+# Chinese Simplified - Pictures directory
+图片
+
+# Chinese Simplified - personal name with underscore prefix
+_张伟的文件
+
+# Chinese Simplified - year directory with CJK date counter
+2024年文件夹
+
+# Chinese Traditional - common directory name for Documents
+文件
+
+# Chinese Traditional - city name Taipei
+臺北
+
+# Chinese Traditional - personal name Chen Mei-Ling
+陳美玲
+
+# Chinese Traditional - Downloads directory
+下載
+
+# Chinese Traditional - city name Hong Kong
+香港
+
+# Chinese Traditional - Pictures directory
+相片
+
+# Chinese Traditional - long address-style label
+臺灣台北市中正區重慶南路一段
+
+# Japanese hiragana - directory name My Documents
+わたしのドキュメント
+
+# Japanese katakana - Desktop directory
+デスクトップ
+
+# Japanese kanji - city name Tokyo
+東京
+
+# Japanese mixed kanji and hiragana - personal directory
+田中太郎の書類
+
+# Japanese mixed kanji and katakana - Downloads directory
+ダウンロード
+
+# Japanese mixed - city Osaka with project label
+大阪のプロジェクト
+
+# Japanese mixed - version label directory
+バージョン2_最終版
+
+# Japanese long mixed string - project directory with era date
+令和6年度_プロジェクト計画書
+
+# Korean Hangul - Documents directory
+문서
+
+# Korean Hangul - capital city Seoul
+서울
+
+# Korean Hangul - personal name Kim Min-jun
+김민준
+
+# Korean Hangul - Downloads directory
+다운로드
+
+# Korean Hangul - city Busan
+부산
+
+# Korean Hangul - personal name with underscore
+이수진_파일
+
+# Korean Hangul - year and project mixed with spaces
+2024년 프로젝트 자료
+
+# Vietnamese with diacritics - city Ho Chi Minh
+Hồ Chí Minh
+
+# Vietnamese with diacritics - Documents directory
+Tài liệu
+
+# Vietnamese with diacritics - personal name Nguyen Thi Lan
+Nguyễn Thị Lan
+
+# Mongolian Cyrillic - capital Ulaanbaatar
+Улаанбаатар
+
+# Mongolian Cyrillic - personal name Bat-Erdene
+Батэрдэнэ
+
+# Arabic with harakat - city Cairo
+اَلْقَاهِرَة
+
+# Arabic with harakat - holy city Mecca with shadda
+مَكَّة
+
+# Arabic with harakat - personal name Muhammad
+مُحَمَّد
+
+# Arabic with harakat - directory name Pictures
+صُوَر
+
+# Arabic with harakat - city Baghdad
+بَغْدَاد
+
+# Arabic with harakat - directory name Music
+مُوسِيقَى
+
+# Arabic plain - city Damascus
+دمشق
+
+# Arabic plain - directory name Downloads
+تنزيلات
+
+# Hebrew with niqqud - holy city Jerusalem
+יְרוּשָׁלַיִם
+
+# Hebrew with niqqud - city Tel Aviv
+תֵּל אָבִיב
+
+# Hebrew with niqqud - personal name David
+דָּוִד
+
+# Hebrew with niqqud - city Haifa
+חֵיפָה
+
+# Hebrew plain with space - directory name Desktop
+שולחן העבודה
+
+# Hebrew plain - directory name Documents
+מסמכים
+
+# Persian Farsi - capital Tehran
+تهران
+
+# Persian Farsi - city Isfahan
+اصفهان
+
+# Persian Farsi - directory name My Documents
+اسناد من
+
+# Persian Farsi - personal name Dariush
+داریوش
+
+# Hindi Devanagari - capital New Delhi
+दिल्ली
+
+# Hindi Devanagari - city Mumbai
+मुम्बई
+
+# Hindi Devanagari - personal name Priya with conjunct
+प्रिया
+
+# Hindi Devanagari - directory name Pictures
+चित्र
+
+# Hindi Devanagari - sacred city Varanasi
+वाराणसी
+
+# Hindi Devanagari - personal name Rajesh
+राजेश
+
+# Hindi Devanagari - directory name Documents with nukta
+दस्तावेज़
+
+# Bengali - city Kolkata
+কলকাতা
+
+# Bengali - personal name Ananya with anusvara
+অনন্যা
+
+# Bengali - directory name Documents
+নথিপত্র
+
+# Tamil - city Chennai
+சென்னை
+
+# Tamil - city Madurai
+மதுரை
+
+# Tamil - personal name Kavitha
+கவிதா
+
+# Thai - capital Bangkok (Krung Thep)
+กรุงเทพฯ
+
+# Thai - city Chiang Mai
+เชียงใหม่
+
+# Georgian Mkhedruli - capital Tbilisi
+თბილისი
+
+# Armenian - capital Yerevan
+Երևան
+
+# Russian Cyrillic - directory name Documents
+Документы
+
+# Russian Cyrillic - capital Moscow
+Москва
+
+# Russian Cyrillic - city Saint Petersburg
+Санкт-Петербург
+
+# Russian Cyrillic - directory name My Photos
+Мои Фотографии
+
+# Ukrainian Cyrillic - capital Kyiv
+Київ
+
+# Ukrainian Cyrillic - city Kharkiv
+Харків
+
+# Serbian Cyrillic - capital Belgrade
+Београд
+
+# Bulgarian Cyrillic - capital Sofia
+София
+
+# Kazakh Cyrillic - capital Astana
+Астана
+
+# Greek - capital Athens
+Αθήνα
+
+# Greek - city Thessaloniki
+Θεσσαλονίκη
+
+# Greek - directory name Documents
+Έγγραφα
+
+# Ancient Greek polytonic - opening of the Odyssey
+Ἄνδρα μοι ἔννεπε
+
+# French extended Latin - word café with precomposed accent
+café
+
+# German extended Latin - overview with umlaut
+Überblick
+
+# Spanish extended Latin - word niño with tilde
+niño
+
+# Polish extended Latin - city Łódź with stroke-L
+Łódź
+
+# Turkish extended Latin - Istanbul with dotted capital I
+İstanbul
+
+# Nordic extended Latin - Swedish city Göteborg
+Göteborg
+
+# German sharp S - street name Straße
+Straße
+
+# Emoji - directory icon prefix before word
+📁Documents
+
+# Emoji - rocket for a launch directory
+🚀Launch
+
+# Emoji - fire suffix on project name
+Project🔥
+
+# Emoji - calendar emoji mixed with year and label
+2024📅Photos
+
+# Emoji - three globe variants as directory name
+🌍🌎🌏
+
+# Unicode symbol - euro currency directory
+€500
+
+# Unicode symbol - pi for math calculations directory
+π_calculations
+
+# Unicode symbol - square root prefix for results
+√results
+
+# Mathematical Unicode SMP - fraktur capital H requires surrogate pair
+𝕳ello
+
+# Fullwidth ASCII - fullwidth Latin letters
+ｆｕｌｌｗｉｄｔｈ
