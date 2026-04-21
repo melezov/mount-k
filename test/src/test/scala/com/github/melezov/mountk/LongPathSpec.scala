@@ -147,7 +147,7 @@ abstract class LongPathSpec(elevated: Boolean) extends ScriptSpec:
       val subDir = if available <= MaxNtfsComponent then singleDir(available, 'u')
                    else deepNest(available)._1
       val script = lease.copyScriptTo(subDir)
-      val _ = lease.runScript(script, extraEnv)()
+      lease.runScript(script, extraEnv)(): Unit
       val result = lease.runScript(script, extraEnv)("/D")
       (result.exitCode must beEqualTo(0)) and
         (result.stdout must contain(s"$drive: drive unmounted")) and

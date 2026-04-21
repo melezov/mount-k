@@ -1,12 +1,15 @@
 package com.github.melezov.mountk
 
 import org.specs2.Specification
-import org.specs2.specification.BeforeAfterSpec
+import org.specs2.execute.{AsResult, Failure, Result}
 import org.specs2.specification.core.Fragments
+import org.specs2.specification.{AroundEach, BeforeAfterSpec}
 
 import java.io.File
 import java.nio.file.{Files, Path}
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{ExecutionException, Executors, LinkedBlockingQueue, TimeUnit, TimeoutException}
+import scala.concurrent.duration.*
 import scala.language.implicitConversions
 import scala.sys.process.*
 import scala.util.Try
@@ -25,7 +28,7 @@ val projectRoot: String =
 val scriptPath: Path =
   Path.of(projectRoot).getParent.resolve("mount-k.bat")
 
-val scriptContent: String = Files.readString(scriptPath)
+lazy val scriptContent: String = Files.readString(scriptPath)
 
 /** HKCU subpath under which every spec writes its own private registry subtree. Individual spec roots are
  *  `s"$TestRegSubPath\\<SpecName>"`, so parallel specs never share a key and there's no contention on the
@@ -39,6 +42,32 @@ val MaxUsablePath = 259
 
 /** NTFS maximum for a single path component (directory or file name). */
 val MaxNtfsComponent = 255
+
+private val watchdogStarted = new AtomicBoolean(false)
+
+/** Start the wall-clock watchdog once per JVM; subsequent calls are a noop. If the forked test JVM
+ *  is still alive after `mountk.test.globalTimeoutSec` (default 5 min), dump every thread's stack
+ *  to stderr and `Runtime.halt` the JVM. Guarantees the harness is never locked up by a deadlock in
+ *  the drive pool, a hung `subst`, or a `Process.!` that never returns. Specs call this from their
+ *  `beforeSpec`; standalone entry points like `Cleanup` don't, so they never spawn the timer. */
+def startGlobalTimeoutWatchdog(): Unit =
+  if watchdogStarted.compareAndSet(false, true) then
+    val timeout = sys.props.get("mountk.test.globalTimeoutSec").map(_.toLong.seconds).getOrElse(5.minutes)
+    new Thread(
+      () =>
+        try
+          Thread.sleep(timeout.toMillis)
+          System.err.println(s"!!! GLOBAL TEST TIMEOUT (${timeout.toString}) - thread dump follows:")
+          import scala.jdk.CollectionConverters.*
+          Thread.getAllStackTraces.asScala.toSeq.sortBy(_._1.getName).foreach { (th, stack) =>
+            System.err.println(s"--- ${th.getName} (${th.getState.toString}) daemon=${th.isDaemon} ---")
+            stack.foreach(f => System.err.println(s"  at ${f.toString}"))
+          }
+          System.err.flush()
+          Runtime.getRuntime.halt(124)
+        catch case _: InterruptedException => (),
+      "mountk-global-watchdog",
+    ) { setDaemon(true) }.start()
 
 def deleteRecursive(path: Path): Unit =
   // Wrap every file-system op in the \\?\ extended-length prefix so deletions work at paths
@@ -56,7 +85,7 @@ def deleteRecursive(path: Path): Unit =
 
 /** Candidate unused drive letters passed in via `-Dmountk.test.unusedDrivesRange` from `unusedDrivesForTest` in
  *  `build.sbt`. These are candidates only; the pool probes each one and admits only those currently free. */
-private val unusedDrivesRange: Seq[Char] =
+private lazy val unusedDrivesRange: Seq[Char] =
   sys.props.get("mountk.test.unusedDrivesRange") match
     case Some(s) if s.nonEmpty && s.toUpperCase.distinct.length == s.length => s.toUpperCase.toSeq
     case other => sys.error(
@@ -65,7 +94,7 @@ private val unusedDrivesRange: Seq[Char] =
 
 /** Candidate real-hard-drive letters passed in via `-Dmountk.test.realDrivesRange` from
  *  `existingRootAccessDriveForTest` in `build.sbt`. The first one that's writable becomes `realDrive`. */
-private val realDrivesRange: Seq[Char] =
+private lazy val realDrivesRange: Seq[Char] =
   sys.props.get("mountk.test.realDrivesRange") match
     case Some(s) if s.toUpperCase.distinct.length == s.length => s.toUpperCase.toSeq
     case other => sys.error(
@@ -76,14 +105,14 @@ private val realDrivesRange: Seq[Char] =
  *  startup against `testRoot` (which we create on demand for the probe). `vol X:` and `GetDriveType` both lie
  *  about some letters Windows reserves for removable media, so the only reliable check is to do the exact
  *  `DefineDosDevice` call the tests will later make. */
-val freeDrives: Seq[Char] =
-  Files.createDirectories(testRoot): Unit
+lazy val freeDrives: Seq[Char] =
+  Files.createDirectories(testRoot)
   unusedDrivesRange.filter(c => WinApi.canSubst(c, testRoot.toAbsolutePath.toString))
 
 /** Real-hard-drive letter chosen from `realDrivesRange` for tests that need a physical disk root
  *  (e.g. writing `D:\mount-d.bat` to test mount-from-drive-root behavior), or None if no candidate
  *  in the range is a writable fixed volume. Tests that need this skip when it's None. */
-val realDrive: Option[Char] =
+lazy val realDrive: Option[Char] =
   realDrivesRange.find { c =>
     if WinApi.isSubst(c) then false
     else if !WinApi.isFixedDrive(c) then false
@@ -119,6 +148,33 @@ object DrivePool:
   }
 
 // -----------------------------------------------------------------------------
+//  Per-example timeout
+// -----------------------------------------------------------------------------
+
+/** Wraps each example body so any single fragment gets at most `mountk.test.perExampleTimeoutSec` s
+ *  (default 10s). On timeout the worker is interrupted and the example fails with a clear message,
+ *  the rest of the spec keeps running. Layered with the JVM-level `globalTimeoutWatchdog` (5 min)
+ *  so a lone runaway fails cleanly while a systemic hang can't lock up the harness either. */
+trait ExampleTimeout extends AroundEach:
+  private val timeoutMs = sys.props.get("mountk.test.perExampleTimeoutSec").map(_.toLong * 1000).getOrElse(10000L)
+
+  def around[R: AsResult](r: => R): Result =
+    val exec = Executors.newSingleThreadExecutor(
+      new Thread(_, "mountk-example-worker") { setDaemon(true) }
+    )
+    try
+      val fut = exec.submit(() => AsResult(r))
+      try fut.get(timeoutMs, TimeUnit.MILLISECONDS)
+      catch
+        case _: TimeoutException =>
+          fut.cancel(true)
+          Failure(s"example exceeded ${timeoutMs}ms wall-clock timeout")
+        case e: ExecutionException =>
+          val cause = Option(e.getCause).getOrElse(e)
+          Failure(s"example threw ${cause.getClass.getSimpleName}: ${cause.getMessage}")
+    finally exec.shutdownNow(): Unit
+
+// -----------------------------------------------------------------------------
 //  ScriptSpec trait
 // -----------------------------------------------------------------------------
 
@@ -126,7 +182,7 @@ object DrivePool:
  *  demand the pool honors; owns per-drive registry subkeys, scratch directories, and `runScript` plumbing
  *  (via `Lease`) so parallel examples never collide on state. Concrete specs MUST set `parallelism` -- the
  *  upper bound on drives requested from the pool. Abstract so a spec that forgets won't compile. */
-trait ScriptSpec extends Specification with BeforeAfterSpec:
+trait ScriptSpec extends Specification with BeforeAfterSpec with ExampleTimeout:
   def parallelism: Int
 
   lazy val drives: Seq[Char] = DrivePool.reserve(parallelism)
@@ -165,17 +221,21 @@ trait ScriptSpec extends Specification with BeforeAfterSpec:
 
     /** Patch the script source so it writes to THIS lease's private registry subkey and skips the UAC
      *  relaunch (the test JVM already runs with the intended privilege; `SKIP_ELEVATION` further gates the
-     *  ACL-requiring HKLM path). */
-    def patchForTest(content: String): String = content
-      .replace("HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\DOS Devices", regKey)
-      .replace("-Verb RunAs ", "")
+     *  ACL-requiring HKLM path). Both substitutions are required; if either fails to match we'd silently
+     *  pass through to the real UAC prompt or HKLM path, so we assert they hit. */
+    def patchForTest(content: String): String =
+      val HklmKey = "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\DOS Devices"
+      val VerbRunAs = """-Verb\s+RunAs\s+""".r
+      require(content.contains(HklmKey), s"patchForTest: expected HKLM key not found in script")
+      require(VerbRunAs.findFirstIn(content).isDefined, s"patchForTest: expected `-Verb RunAs` not found in script")
+      VerbRunAs.replaceAllIn(content.replace(HklmKey, regKey), "")
 
     def runScript(script: Path = scriptPath, extraEnv: Seq[(String, String)] = Seq.empty)(args: String*): RunResult =
       val out = new StringBuilder
       val err = new StringBuilder
       val logger = ProcessLogger(
-        line => out ++= line ++= "\r\n": Unit,
-        line => err ++= line ++= "\r\n": Unit,
+        line => out ++= line += '\n': Unit,
+        line => err ++= line += '\n': Unit,
       )
       val cmd = script.toString +: args
       val exitCode = Process(cmd, None, extraEnv*).!(logger)
@@ -200,12 +260,14 @@ trait ScriptSpec extends Specification with BeforeAfterSpec:
     val d = driveQueue.take()
     val lease = new Lease(d)
     try
-      WinApi.substDelete(d)
+      WinApi.substDelete(d): Unit
       f(lease)
     finally
-      WinApi.substDelete(d)
-      WinApi.regDeleteKey(lease.regSubPath)
-      if Files.exists(lease.driveRoot) then deleteRecursive(lease.driveRoot)
+      // Each cleanup step is wrapped so a transient Windows failure (locked handle, stale subst)
+      // can't leak the drive slot -- `driveQueue.put` MUST run or the pool shrinks for the rest of the JVM.
+      Try(WinApi.substDelete(d)): Unit
+      Try(WinApi.regDeleteKey(lease.regSubPath)): Unit
+      Try(if Files.exists(lease.driveRoot) then deleteRecursive(lease.driveRoot)): Unit
       driveQueue.put(d)
 
   /** Lease `n` drives for the duration of `f`. The `n` must be within the spec's reserved `drives.length`;
@@ -220,13 +282,16 @@ trait ScriptSpec extends Specification with BeforeAfterSpec:
       leased.foreach(WinApi.substDelete)
       f(leases)
     finally
-      leased.foreach(WinApi.substDelete)
+      // See `withDrive`: each per-lease cleanup is isolated so an exception on one doesn't prevent
+      // subsequent cleanups or the final `put`s that return drives to the queue.
+      leased.foreach(d => Try(WinApi.substDelete(d)))
       leases.foreach(l =>
-        WinApi.regDeleteKey(l.regSubPath)
-        if Files.exists(l.driveRoot) then deleteRecursive(l.driveRoot))
+        Try(WinApi.regDeleteKey(l.regSubPath)): Unit
+        Try(if Files.exists(l.driveRoot) then deleteRecursive(l.driveRoot)))
       leased.foreach(driveQueue.put)
 
   def beforeSpec: Fragments = step {
+    startGlobalTimeoutWatchdog()
     println(s"[$specName] drives=${drives.mkString("[", ":, ", ":]")} (reserved ${drives.length}/$parallelism)")
     drives.foreach(WinApi.substDelete)
     // Wipe the whole per-spec subtree so any leftover `drive-X` subkeys from previous runs are gone.

@@ -4,53 +4,44 @@ import org.specs2.Specification
 import org.specs2.execute.{Result, Skipped}
 import org.specs2.specification.core.SpecStructure
 
-import java.nio.charset.StandardCharsets.ISO_8859_1
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.{ISO_8859_1, US_ASCII, UTF_8}
 import java.nio.file.{Files, Path}
 import scala.sys.process.*
 
-/** Validates repository-wide text-file formatting: line endings, terminal newlines,
- *  and ASCII discipline for source/doc files. The file set comes from `git ls-files`
- *  so the exclusion list stays in sync with .gitignore automatically -- no hardcoded
- *  denylist to drift. Each file is classified by its extension or fixed name before
- *  applying the right checks. */
-class FormatSpec extends Specification:
+/** Validates repository-wide formatting rules */
+class FormatSpec extends Specification with ExampleTimeout:
 
   private val repoRoot: Path = scriptPath.getParent
 
-  // (needsCrlf, checkAscii). LICENSE is excluded from ASCII checking because legal boilerplate
-  // sometimes carries non-ASCII ((c), typographic quotes). .txt is excluded because the unicode
-  // test-data fixtures are pure non-ASCII by design.
-  private val rulesByExt: Map[String, (Boolean, Boolean)] = Map(
-    "bat"        -> (true,  true),
-    "md"         -> (false, true),
-    "scala"      -> (false, true),
-    "sbt"        -> (false, true),
-    "txt"        -> (false, false),
-    "properties" -> (false, true),
+  private val rulesByExt = Map(
+    "bat"        -> ("\r\n", US_ASCII),
+    "md"         -> ("\n",   US_ASCII),
+    "properties" -> ("\n",   US_ASCII),
+    "sbt"        -> ("\n",   US_ASCII),
+    "scala"      -> ("\n",   US_ASCII),
+    "txt"        -> ("\n",   UTF_8),
   )
-  private val rulesByName: Map[String, (Boolean, Boolean)] = Map(
-    ".gitignore"    -> (false, true),
-    ".editorconfig" -> (false, true),
-    "LICENSE"       -> (false, false),
+  private val rulesByName = Map(
+    ".editorconfig" -> ("\n", US_ASCII),
+    ".gitignore"    -> ("\n", US_ASCII),
+    "LICENSE"       -> ("\n", UTF_8),
   )
 
-  // Binary blobs that git tracks but text-format rules don't apply to. Skipped entirely so
-  // they don't show up as `unrecognized` either.
+  // Binary blobs that git tracks but text-format rules don't apply to
   private val binaryExts: Set[String] = Set("png")
 
   private def isBinary(p: Path): Boolean =
     binaryExts.contains(p.getFileName.toString.split('.').last.toLowerCase)
 
-  private def rulesFor(p: Path): Option[(Boolean, Boolean)] =
+  private def rulesFor(p: Path): Option[(String, Charset)] =
     val name = p.getFileName.toString
     rulesByName.get(name).orElse {
       val dot = name.lastIndexOf('.')
       if dot < 0 then None else rulesByExt.get(name.substring(dot + 1))
     }
 
-  // `--cached --others --exclude-standard` = tracked + untracked-but-not-ignored, i.e. every
-  // file a human would expect the checks to cover. Delegating to git means every .gitignore
-  // nuance (nesting, negations, globs) is honoured without reimplementing the parser here.
+  // `--cached --others --exclude-standard` = tracked + untracked-but-not-ignored
   private val allFiles: List[Path] =
     Process(Seq("git", "ls-files", "--cached", "--others", "--exclude-standard"), repoRoot.toFile)
       .lazyLines.iterator
@@ -78,9 +69,9 @@ class FormatSpec extends Specification:
   private def endsWithNewline =
     val offenders = recognized.filter { p =>
       val bytes = Files.readAllBytes(p)
-      val needsCrlf = rulesFor(p).get._1
+      val lineEnding = rulesFor(p).get._1
       if bytes.isEmpty then true
-      else if needsCrlf then
+      else if lineEnding == "\r\n" then
         !(bytes.length >= 2 && bytes(bytes.length - 2) == '\r'.toByte && bytes.last == '\n'.toByte)
       else bytes.last != '\n'.toByte
     }
@@ -88,9 +79,9 @@ class FormatSpec extends Specification:
 
   private def correctLineEndings =
     val offenders = recognized.filter { p =>
-      val needsCrlf = rulesFor(p).get._1
+      val lineEnding = rulesFor(p).get._1
       val bytes = Files.readAllBytes(p)
-      if needsCrlf then
+      if lineEnding == "\r\n" then
         // Every \n must be preceded by \r.
         val s = new String(bytes, ISO_8859_1)
         s != s.replace("\r", "").replace("\n", "\r\n")
@@ -102,15 +93,13 @@ class FormatSpec extends Specification:
 
   private def asciiOnly =
     val offenders = recognized.filter { p =>
-      val (_, checkAscii) = rulesFor(p).get
-      if !checkAscii then false
+      val (_, charset) = rulesFor(p).get
+      if charset != US_ASCII then false
       else Files.readAllBytes(p).exists(b => (b & 0xff) > 0x7f)
     }
     offenders.map(rel) must beEmpty
 
-  // Only ASCII horizontal whitespace -- asciiOnly already bars non-ASCII in the files that
-  // matter, and the remaining .txt/LICENSE are either pure-ASCII or deliberately non-ASCII
-  // fixtures where a Unicode trailing-space check would produce noise rather than signal.
+  // asciiOnly already assures that these are the only whitespaces that could sneak in
   private val trailingWs = """[ \t\x0B\f]+$""".r
 
   private def noTrailingWhitespace =

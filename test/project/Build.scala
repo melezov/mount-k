@@ -20,6 +20,10 @@ object Build extends AutoPlugin {
 
   val unusedDrivesRangeProp = "mountk.test.unusedDrivesRange"
   val realDrivesRangeProp = "mountk.test.realDrivesRange"
+  val globalTimeoutSecProp = "mountk.test.globalTimeoutSec"
+  val perExampleTimeoutSecProp = "mountk.test.perExampleTimeoutSec"
+  val defaultGlobalTimeoutSec: Int = 5 * 60
+  val defaultPerExampleTimeoutSec: Int = 10
 
   override def projectSettings: Seq[Def.Setting[?]] = BuildInfoPlugin.projectSettings ++ Seq(
     version := readVersionFromBat((ThisBuild / baseDirectory).value / ".." / "mount-k.bat"),
@@ -33,9 +37,16 @@ object Build extends AutoPlugin {
         sys.error(
           s"${unusedDrivesForTest.key.label} and ${existingRootAccessDriveForTest.key.label} must not overlap " +
           s"(shared: ${overlap.toSeq.sorted.mkString(", ")})")
+      // Wall-clock kill switch for the test JVM. Overridable via `sbt -Dmountk.test.globalTimeoutSec=NNN`;
+      // default 5 min. Guarantees a deadlock can never lock up the whole harness.
+      val globalTimeoutSec = sys.props.getOrElse(globalTimeoutSecProp, defaultGlobalTimeoutSec)
+      // Per-example timeout enforced via specs2 AroundEach. Default 10s; override on command line.
+      val perExampleTimeoutSec = sys.props.getOrElse(perExampleTimeoutSecProp, defaultPerExampleTimeoutSec)
       Seq(
         s"-D$unusedDrivesRangeProp=${mount.mkString}",
         s"-D$realDrivesRangeProp=${real.mkString}",
+        s"-D$globalTimeoutSecProp=$globalTimeoutSec",
+        s"-D$perExampleTimeoutSecProp=$perExampleTimeoutSec",
       )
     },
     Test / sourceGenerators += Def.task {

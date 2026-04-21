@@ -8,21 +8,41 @@ Rename it to pick your drive letter - e.g. `mount-p.bat` for `P:`
 
 # Why
 
-Based on top of `SUBST`, this nice util allows you to pin certain folders to be in the same path e.g. `X:\mystuff` across different devices.
+Standing on top of `SUBST`, this util allows you to pin certain folders to be
+in the same path e.g. `X:\mystuff` across different devices.
+Not every laptop has the same drive setup and this helps ensuring your setup
+is closer to being identical, if you need that.
 
-Or e.g. to fix extremly gruesome super long directory names by splicing them off into something simpler like converting `C:\Users\<FirstName LastName>\AppData\Local\Coursier\cache\arc\https\github.com\adoptium\temurin21-binaries\releases\download\jdk-21.0.10%252B7\OpenJDK21U-jdk_x64_windows_hotspot_21.0.10_7.zip\jdk-21.0.10+7\bin\java.exe` into `J:\bin\java.exe`
+Or e.g. to fix extremly gruesome super long directory names by splicing them off
+into something simpler like converting `C:\Users\melezov\AppData\Local\Coursier\cache\arc\https\github.com\adoptium\temurin21-binaries\releases\download\jdk-21.0.10%252B7\OpenJDK21U-jdk_x64_windows_hotspot_21.0.10_7.zip\jdk-21.0.10+7\bin\java.exe`
+into `J:\bin\java.exe`
+
+The unfortunate `%` in that Coursier path beautifully breaks every tool that
+tries to do something with Java - be it Bash interop, firewall rules, you name it.
+`J:\bin` doesn't.
 
 ### UAC / Noop
 
 When you run the script - a UAC prompt will appear so that the mapping is baked into the registry and that it survives reboots. The script is idempotent, so running it multiple times is a NOOP.
 
 ```
-mount-k.bat v0.1.0 - https://github.com/melezov/mount-k
+mount-k.bat v0.2.0 - https://github.com/melezov/mount-k
 
-Usage: mount-k.bat [/D|/?]
-  <no args> - mount K: to d:\Code\mount-k\
+Usage: mount-k.bat [/M|/D|/?]
+  <no args> - same as /M [default]
+  /M        - mount K: to d:\Code\mount-k\ and persist across reboots
   /D        - unmount K: and remove the boot-time registry entry
-  /?        - show this help
+```
+
+Rename the script to `unmount-k.bat` and the default flips:
+
+```
+unmount-k.bat v0.2.0 - https://github.com/melezov/mount-k
+
+Usage: unmount-k.bat [/M|/D|/?]
+  <no args> - same as /D [default]
+  /M        - mount K: to d:\Code\mount-k\ and persist across reboots
+  /D        - unmount K: and remove the boot-time registry entry
 ```
 
 ## Notes
@@ -38,7 +58,6 @@ Usage: mount-k.bat [/D|/?]
 - *It's incredible how things become complicated when you go a bit deeper*
 - Support a path argument so that we can mount DVDs, UNCs, etc...
 - Guard against 8.3 short-name collisions at boot so that the Session Manager doesn't automount the wrong directory.
-- True multi-call dispatch - invoking the script as `unmount-k.bat` should behave exactly like `mount-k.bat /D`
 - `/status` flag of sorts - since running without args does an automatic mount - should we act as `subst` if they rename the app to just `mount.bat`?
 - Drive-letter denylist - configurable list of letters the script refuses to mount (e.g. `A`/`B`)
 - Orphan detection - when the registry boots a mount but the script is gone, surface that so the user can clean up via another script.

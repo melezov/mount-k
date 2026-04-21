@@ -27,4 +27,7 @@ existingRootAccessDriveForTest := 'D' to 'J'
 Test / fork := true
 Test / parallelExecution := true
 
+// Drops every live subst mapping and erases all prod & test registry entries
+addCommandAlias("cleanup", "Test/runMain com.github.melezov.mountk.Cleanup")
+
 Global / onChangedBuildSource := ReloadOnSourceChanges

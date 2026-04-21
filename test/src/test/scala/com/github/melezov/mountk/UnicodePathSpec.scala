@@ -56,7 +56,7 @@ abstract class UnicodePathSpec(elevated: Boolean) extends ScriptSpec:
     val result = lease.runScript(script, extraEnv)()
     if result.exitCode == 31 && attempt < MaxRetryAttempts then
       println(s"[retry] ${lease.drive}: exit 31 on attempt $attempt, retrying after ${100 * attempt}ms")
-      WinApi.substDelete(lease.drive)
+      WinApi.substDelete(lease.drive): Unit
       Thread.sleep(100L * attempt)
       runWithRetry(lease, script, attempt + 1)
     else result
