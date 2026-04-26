@@ -6,6 +6,9 @@ I hate opening up the `cmd` if I don't need to. \
 Plonk the script into where you need it and just keep it there. \
 Rename it to pick your drive letter - e.g. `mount-p.bat` for `P:`
 
+[Releases are HERE](https://github.com/melezov/mount-k/releases) -
+[v0.4.0](https://github.com/melezov/mount-k/releases/download/v0.4.0/mount-k.bat)
+
 # Why
 
 Standing on top of `SUBST`, this util allows you to pin certain folders to be
@@ -28,9 +31,9 @@ Drop `mount-k.bat` next to the directory you want exposed and double-click it
 times is a no-op.
 
 ```
-mount-k v0.3.0 - https://github.com/melezov/mount-k
+mount-k v0.4.0 - https://github.com/melezov/mount-k
 
-Usage: mount-k.bat [/M|/D|/PM <mode>|/?]
+Usage: mount-k.bat <options>
   <no args>    - same as /M (mount) since the filename defines the default action
   /M           - mount `K:` to `d:\Code\mount-k`
   /D           - unmount `K:`
@@ -50,7 +53,7 @@ The default is `PERSIST_MODE=if-suffixed` - plain `mount-k.bat` / `unmount-k.bat
 `/?` reflects the filename you picked - `mount-k-and-remember.bat /?` shows the persist tail on the `/M` row, `unmount-k-and-forget.bat /?` shows the cleanup tail on `/D`.
 
 ```
-Usage: mount-k-and-remember.bat [/M|/D|/PM <mode>|/?]
+Usage: mount-k-and-remember.bat <options>
   <no args>    - same as /M (mount) since the filename defines the default action
   /M           - mount `K:` to `d:\Code\mount-k` and persist across reboots
   /D           - unmount `K:`
@@ -64,7 +67,7 @@ The mode lives at the top of the script (and can be overridden per-run with `/PM
 | Mode                      | Behavior                                                                                                                        |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `always`                  | every mount writes / every unmount removes the boot-time registry entry, regardless of filename                                 |
-| `if-suffixed` *(default)* | filename suffix decides: `-and-remember` persists on mount, `-and-forget` un-persists on unmount, plain names skip the registry |
+| `if-suffixed` *[default]* | filename suffix decides: `-and-remember` persists on mount, `-and-forget` un-persists on unmount, plain names skip the registry |
 | `ask`                     | prompt the user whether to do registry write / delete
 | `never`                   | session-only - never read, write, or delete the registry, no UAC even with suffixed filenames                                  |
 
@@ -86,8 +89,11 @@ The mode lives at the top of the script (and can be overridden per-run with `/PM
 - Orphan detection - when the registry boots a mount but the script is gone, surface that so the user can clean up via another script.
 - Chaining of substs - if the script is run from inside a mounted drive, should it mount the original backing path or the visible subst path?
 - Per-user persistence? For non-admin users: install a Task Scheduler login trigger instead of HKLM, so the mapping persists without UAC...
-- Recycle Bin behaviour on subst drives - document and (if necessary) work around how Windows handles `$Recycle.Bin` under a subst mapping
+- Recycle Bin behavior on subst drives - document and (if necessary) work around how Windows handles `$Recycle.Bin` under a subst mapping
 - Drive-icon customization, set desktop.ini at the mount root?
+- Have CI/CD deploy to WinGet / Chocolatey / Scoop...
+- Potentially invoke `chcp 65001` at script entry/exit to ensure UTF-8 support
+- `%DRIVE%:\nul` as a secondary occupancy check alongside `vol`
 
 ## License
 

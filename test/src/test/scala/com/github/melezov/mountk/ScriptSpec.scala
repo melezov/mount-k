@@ -26,11 +26,13 @@ trait ScriptSpec extends Specification with BeforeAfterSpec with TestTimeouts wi
    * `:run_uac` is unreachable) inherit the default. */
   protected def elevated: Boolean = false
 
-  /** Env vars passed to every `lease.runScript` invocation in this spec. Today this is just
-   * `SKIP_ELEVATION` -- gating the script's HKLM write path so the test JVM doesn't UAC-prompt --
-   * but it's the single point of extension for any future spec-wide env. */
+  /** Env vars passed to every `lease.runScript` invocation in this spec. `SKIP_ELEVATION` gates the
+    * script's HKLM write path so the test JVM doesn't UAC-prompt; `NO_COLOR=1` suppresses the
+    * script's ANSI sequences so plain-text substring assertions stay valid. Specs that exercise the
+    * color path opt out by overriding this. */
   protected lazy val extraEnv: Seq[(String, String)] =
-    if elevated then Seq("SKIP_ELEVATION" -> "1") else Seq.empty
+    val elev = if elevated then Seq("SKIP_ELEVATION" -> "1") else Seq.empty
+    elev :+ ("NO_COLOR" -> "1")
 
   /** Spec-level override of the script's hardcoded PERSIST_MODE. When defined, every script copy
     * via `copyScriptTo` has its active `set "PERSIST_MODE=..."` line rewritten to this value as
@@ -64,7 +66,7 @@ trait ScriptSpec extends Specification with BeforeAfterSpec with TestTimeouts wi
 
   /** Intra-spec pool of the drives the spec reserved from `DrivePool`. `withDrive`/`withDrives` lease from
     * here; if all drives are in use, a call blocks until one is returned -- which is the "serial within
-    * spec" fallback when `minDrives=1`. */
+    * spec" fallback when `parallelism=1`. */
   private lazy val driveQueue: LinkedBlockingQueue[Char] =
     val q = new LinkedBlockingQueue[Char]()
     drives.foreach(q.put)

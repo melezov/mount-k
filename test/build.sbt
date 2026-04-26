@@ -16,8 +16,8 @@ libraryDependencies ++= Seq(
 )
 
 // Candidate drive letters the tests may subst to. The test JVM probes these at startup and enters
-// the actually-free ones into a shared pool; each spec reserves between its `minDrives` and
-// `maxDrives` at beforeAll and releases at afterAll, so cross-spec parallelism is automatic.
+// the actually-free ones into a shared pool; each spec reserves up to its `parallelism` count from
+// the pool at beforeAll and releases at afterAll, so cross-spec parallelism is automatic.
 unusedDrivesForTest := 'K' to 'Z'
 
 // Real hard drives the tests may put the mount-k.bat into.

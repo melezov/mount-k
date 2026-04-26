@@ -75,7 +75,7 @@ abstract class LongPathSpec(override val elevated: Boolean) extends ScriptSpec:
     val expectedReg = s"\\??\\$expectedDir"
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.persisted(drive) must beSome(expectedReg)) and
@@ -151,7 +151,7 @@ abstract class LongPathSpec(override val elevated: Boolean) extends ScriptSpec:
       lease.runScript(script)(): Unit
       val result = lease.runScript(script)("/D")
       result was SUCCESS and
-        (result.stdout has s"$drive: drive unmounted") and
+        (result.stdout has s"`$drive:` drive unmounted") and
         result.stderr.isEmpty and
         (result.persisted hasNot drive) and
         (result.live hasNot drive)

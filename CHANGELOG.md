@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.4.0
+
+### Added
+- ANSI-colored output feat. OSC 8 clickable hyperlink for the GitHub URL
+- `NO_COLOR=1` env var opts out of all coloring and hyperlinks, per [no-color.org](https://no-color.org)
+- New `:setup_colors` subroutine called once at script entry. Centralizes terminal probing and class
+  setup so the rest of the script just consumes the resulting variables.
+- Renamed/new script-level vars `PROJECT_NAME` / `PROJECT_VERSION` / `PROJECT_URL`
+- `FormatSpec` now also rejects UTF-8 BOM markers (`EF BB BF`) at the start of any tracked file.
+
+### Changed
+- `:usage` signature simplified to `Usage: mount-k.bat <options>`.
+- `ScriptSpec.extraEnv` now sets `NO_COLOR=1` by default so plain-text substring assertions in the
+  rest of the suite stay valid against the new colored output. Specs that exercise color (e.g.
+  `ColorSpec`) opt out by overriding `extraEnv`.
+- Every persistence and behavior spec updated to expect backtick-wrapped drives in mount/unmount
+  echoes (`` `K:` drive mapped to `` instead of `K: drive mapped to`).
+- `Build.scala` now reads the version from `set "PROJECT_VERSION=(v.+)"` (was `set "VERSION=(.+)"`).
+
 ## v0.3.0
 
 ### Added
@@ -62,7 +81,7 @@ Initial release.
 - Persist the mapping across reboots by writing to `HKLM\...\Session Manager\DOS Devices`.
 - Self-idempotent: mount + mount = mount; unmount + unmount = no-op with the registry left clean.
 - `/D` flag unmounts and removes the registry entry.
-- UAC elevation via PowerShell `Start-Process -Verb RunAs`; cancelled prompts surface as exit 1223.
+- UAC elevation via PowerShell `Start-Process -Verb RunAs`; canceled prompts surface as exit 1223.
 - Refuses to clobber real volumes or network shares holding the target letter (exit 85).
 - Error glossary mapping script exit codes to Windows system error names.
 - Handles script paths with spaces, parentheses, exclamation marks, percent signs, carets, ampersands, and unicode.

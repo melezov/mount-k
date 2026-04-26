@@ -7,7 +7,7 @@ import scribe.*
 import java.nio.file.{Files, Path}
 import scala.sys.process.*
 
-/** Recovery tool for cancelled / killed test runs and stray mount-k mounts. Discovers work in
+/** Recovery tool for canceled / killed test runs and stray mount-k mounts. Discovers work in
   * three buckets and folds whatever needs elevation into a single UAC-prompted batch script:
   *
   *    - Live `subst` mappings: try to remove each in the current (non-elevated) LUID via JNA.
@@ -77,7 +77,7 @@ object Cleanup:
 
   /** Single PowerShell `Start-Process -Verb RunAs` on the generated .bat: one UAC prompt, one
     * cleanup, no JVM re-launch. `-PassThru` lets us read the child's exit code; the try/catch
-    * turns a cancelled UAC prompt into exit 1223 (same convention mount-k.bat uses). */
+    * turns a canceled UAC prompt into exit 1223 (same convention mount-k.bat uses). */
   private def runElevated(bat: Path, substLetters: List[Char], prodLetters: List[Char]): Unit =
     val reasons = Seq(
       Option.when(substLetters.nonEmpty)(s"subst: ${substLetters.map(c => s"$c:").mkString(", ")}"),
@@ -93,5 +93,5 @@ object Cleanup:
         "catch { exit 1223 }"
     Process(Seq("powershell", "-NoProfile", "-Command", ps)).! match
       case 0 => info("elevated cleanup completed")
-      case 1223 => warn("UAC prompt cancelled; entries left in place")
+      case 1223 => warn("UAC prompt canceled; entries left in place")
       case n => error(s"elevated cleanup failed (exit $n)")

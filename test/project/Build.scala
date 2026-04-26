@@ -65,9 +65,9 @@ object Build extends AutoPlugin {
     outputStrategy := Some(StdoutOutput),
   )
 
-  private val VersionPattern = """set "VERSION=(.+)"""".r
+  private val VersionPattern = """set "PROJECT_VERSION=(v.+)"""".r
 
   private def readVersionFromBat(bat: File): String =
     IO.readLines(bat).collectFirst { case VersionPattern(v) => v }
-      .getOrElse(sys.error(s"Could not find VERSION in ${bat.getAbsolutePath}"))
+      .getOrElse(sys.error(s"Could not find PROJECT_VERSION (must start with `v`) in ${bat.getAbsolutePath}"))
 }

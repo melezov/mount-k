@@ -51,7 +51,7 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
@@ -67,8 +67,8 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     val script = lease.copyScriptTo("suffixed", s"mount-${drive.toLower}-and-remember.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persisted to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("suffixed")))
@@ -83,7 +83,7 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     lease.seedReg("preexisting-stale-value")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       (result.stdout hasNot "removed from registry") and
       result.stderr.isEmpty and
       (result.persisted(drive) must beSome("preexisting-stale-value")) and
@@ -101,8 +101,8 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     lease.runScript(mountScript)(): Unit
     val result = lease.runScript(unmountScript)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
-      (result.stdout has s"$drive: removed from registry") and
+      (result.stdout has s"`$drive:` drive unmounted") and
+      (result.stdout has s"`$drive:` removed from registry") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -118,7 +118,7 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     lease.seedReg("preexisting-stale-value")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       result.stderr.isEmpty and
       (result.persisted(drive) must beSome("preexisting-stale-value"))
@@ -133,7 +133,7 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     lease.seedReg("preexisting-stale-value")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       (result.stdout hasNot "removed from registry") and
       result.stderr.isEmpty and
       (result.persisted(drive) must beSome("preexisting-stale-value"))
@@ -151,10 +151,10 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     val mounted = lease.runScript(script)()
     val result = lease.runScript(script)("/D")
     mounted was SUCCESS and
-      (mounted.stdout has s"$drive: persisted to") and
+      (mounted.stdout has s"`$drive:` persisted to") and
       (mounted.persisted has drive) and
       (result was SUCCESS) and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       (result.stdout hasNot "removed from registry") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
@@ -168,8 +168,8 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     val script = lease.copyScriptTo("suf-after", s"mount-${drive.toLower}-and-remember.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persisted to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("suf-after")))
@@ -198,7 +198,7 @@ abstract class MountKPersistIfSuffixedSpec(override val elevated: Boolean) exten
     val result = lease.runScript(script)()
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to")
+      (result.stdout has s"`$drive:` drive mapped to")
   }
 
   // ---------------------------------------------------------------------------

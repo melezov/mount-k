@@ -47,8 +47,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script, stdin = stdinY)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persisted to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -58,8 +58,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script, stdin = stdinN)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persistence skipped") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persistence skipped") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -70,8 +70,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     lease.runScript(script, stdin = stdinY)(): Unit
     val result = lease.runScript(script, stdin = stdinY)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
-      (result.stdout has s"$drive: removed from registry") and
+      (result.stdout has s"`$drive:` drive unmounted") and
+      (result.stdout has s"`$drive:` removed from registry") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -84,8 +84,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     lease.runScript(script, stdin = stdinY)(): Unit
     val result = lease.runScript(script, stdin = stdinN)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
-      (result.stdout has s"$drive: registry cleanup skipped") and
+      (result.stdout has s"`$drive:` drive unmounted") and
+      (result.stdout has s"`$drive:` registry cleanup skipped") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live hasNot drive)
@@ -99,7 +99,7 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     lease.runScript(script, stdin = stdinY)(): Unit
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is already persisted in registry") and
+      (result.stdout has s"`$drive:` is already persisted in registry") and
       result.stderr.isEmpty and
       (result.persisted has drive)
   }
@@ -111,8 +111,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: is not mounted via subst") and
-      (result.stdout has s"$drive: was not persisted in registry") and
+      (result.stdout has s"`$drive:` is not mounted via subst") and
+      (result.stdout has s"`$drive:` was not persisted in registry") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive)
   }
@@ -122,8 +122,8 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script, stdin = Some(InputStream.nullInputStream()))()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persistence skipped") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persistence skipped") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive)
   }
@@ -136,7 +136,7 @@ abstract class MountKPersistAskSpec(override val elevated: Boolean) extends Scri
     val result = lease.runScript(script, stdin = stdinN)()
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to")
+      (result.stdout has s"`$drive:` drive mapped to")
   }
 
   private def helpUnderAskShowsAskTails = withDrive { (lease, drive) =>

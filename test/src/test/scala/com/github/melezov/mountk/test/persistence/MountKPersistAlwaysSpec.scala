@@ -41,6 +41,9 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     /PM never accepted                                 $cliPmNeverAccepted
     /PM bogus rejected with exit 87                    $cliPmInvalidRejected
     /PM with no value rejected with exit 87            $cliPmMissingValueRejected
+    /PM with switch as value (/PM /M) rejected         $cliPmSwitchAsValueRejected
+    repeated /PM keeps the last value                  $cliPmRepeatedLastWins
+    /PM with hostile chars survives echo               $cliPmHostileCharsSurviveEcho
 
   filename suffix grammar
     suffix-after-drive name accepted in always mode    $suffixAfterDriveAccepted
@@ -67,7 +70,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val script = lease.copyScriptTo("persisted-echo")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` persisted to") and
       (result.stdout has "persisted-echo") and
       (result.stdout has "in registry") and
       result.stderr.isEmpty and
@@ -82,7 +85,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is already persisted in registry") and
+      (result.stdout has s"`$drive:` is already persisted in registry") and
       result.stderr.isEmpty and
       (result.persisted has drive)
   }
@@ -92,7 +95,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: removed from registry") and
+      (result.stdout has s"`$drive:` removed from registry") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive)
   }
@@ -104,8 +107,8 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val script = lease.copyScriptTo("absent-echo")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: is not mounted via subst") and
-      (result.stdout has s"$drive: was not persisted in registry") and
+      (result.stdout has s"`$drive:` is not mounted via subst") and
+      (result.stdout has s"`$drive:` was not persisted in registry") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive)
   }
@@ -178,6 +181,45 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
       (result.stderr has "`always` [default], `if-suffixed`, `ask`, `never`")
   }
 
+  private def cliPmSwitchAsValueRejected = withDrive { (lease, _) =>
+    // The arg parser greedily consumes the next token as the /PM value, even if it looks like a
+    // switch. So `/PM /M` sets PERSIST_MODE=/M, fails the allowlist, exits 87. A regression that
+    // peeks ahead and treats `/M` as a switch instead would silently accept `/PM` with no value.
+    val script = lease.copyScriptTo("pm-switch-as-value")
+    val result = lease.runScript(script)("/PM", "/M")
+    result was ERROR_INVALID_PARAMETER and
+      (result.stderr has "Unsupported /PM `/M`")
+  }
+
+  private def cliPmRepeatedLastWins = withDrive { (lease, drive) =>
+    // `/PM always /PM never` -- the arg loop applies each `/PM <value>` independently, so the
+    // last one wins. Pin that semantics so a regression that errored on duplicate flags would
+    // surface here.
+    val script = lease.copyScriptTo("pm-repeated")
+    val result = lease.runScript(script)("/PM", "always", "/PM", "never")
+    // PM=never neutralizes registry persistence even though the script ships `if-suffixed` and
+    // we've pinned `always` here -- so a successful mount with no registry write proves
+    // last-wins semantics.
+    result was SUCCESS and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout hasNot "persisted") and
+      (result.persisted hasNot drive)
+  }
+
+  private def cliPmHostileCharsSurviveEcho = withDrive { (lease, _) =>
+    // A bogus mode value containing `)` used to break the rejection echo because it ran inside an
+    // `if defined PERSIST_MODE_VIA_ARGS ( ... )` parens block -- the unescaped `)` closed the
+    // block early. The fix routes the echo through delayed expansion so the value is only
+    // substituted at execute time, after the block has been parsed. (We test parens-only because
+    // `&` and `|` get eaten by cmd's command-line parsing before the script even sees them, no
+    // matter how Process quotes the arg.)
+    val script = lease.copyScriptTo("pm-hostile")
+    val result = lease.runScript(script)("/PM", "foo)bar(qux")
+    result was ERROR_INVALID_PARAMETER and
+      (result.stderr has "Unsupported /PM") and
+      (result.stderr has "foo)bar(qux")
+  }
+
   private def cliPmMissingValueRejected = withDrive { (lease, drive) =>
     // /PM with no following token is invalid user input; exit 87 with a message that explains
     // /PM needs a value and lists the allowlist (with the current default tagged inline).
@@ -196,8 +238,8 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val script = lease.copyScriptTo("suf-after", s"mount-${drive.toLower}-and-remember.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persisted to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("suf-after")))
@@ -259,7 +301,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val result = lease.runScript(script)("/PM", "ALWAYS")
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.persisted has drive)
   }
 
@@ -268,7 +310,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val result = lease.runScript(script)("/PM", "If-Suffixed")
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to")
+      (result.stdout has s"`$drive:` drive mapped to")
   }
 
   private def cliPmAskMixedAccepted = withDrive { (lease, drive) =>
@@ -280,7 +322,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val result = lease.runScript(script, stdin = stdinN)("/PM", "aSk")
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.persisted hasNot drive)
   }
 
@@ -289,7 +331,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val result = lease.runScript(script)("/PM", "NEVER")
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       // /PM NEVER overrides spec-level always; downgrade fires, no registry write.
       (result.persisted hasNot drive)
   }
@@ -303,7 +345,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val result = lease.runScript(script)()
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.persisted has drive)
   }
 
@@ -323,8 +365,8 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val script = lease.copyScriptTo("flat-mfromdf", s"unmount-${drive.toLower}-and-forget.bat")
     val result = lease.runScript(script)("/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
-      (result.stdout has s"$drive: persisted to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
+      (result.stdout has s"`$drive:` persisted to") and
       (result.persisted has drive)
   }
 
@@ -336,8 +378,8 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
-      (result.stdout has s"$drive: removed from registry") and
+      (result.stdout has s"`$drive:` drive unmounted") and
+      (result.stdout has s"`$drive:` removed from registry") and
       (result.persisted hasNot drive)
   }
 
@@ -349,7 +391,7 @@ abstract class MountKPersistAlwaysSpec(override val elevated: Boolean) extends S
     val script = lease.copyScriptTo("pm-never-suffixed", s"mount-${drive.toLower}-and-remember.bat")
     val result = lease.runScript(script)("/PM", "never")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       (result.stdout hasNot "registry") and
       (result.persisted hasNot drive)

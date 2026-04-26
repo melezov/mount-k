@@ -14,7 +14,7 @@ class ReadMeSpec extends Specification with TestTimeouts:
   private val readmePath: Path = scriptPath.getParent.resolve("README.md")
   private lazy val readmeContent: String = Files.readString(readmePath)
 
-  private val VersionInReadme = """v(\d+\.\d+\.\d+)""".r
+  private val VersionInReadme = """(v\d+\.\d+\.\d+)""".r
 
   override def is: SpecStructure = s2"""
   README.md cross-doc consistency

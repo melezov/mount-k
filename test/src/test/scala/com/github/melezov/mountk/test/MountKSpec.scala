@@ -6,7 +6,6 @@ import org.specs2.specification.core.SpecStructure
 import scala.language.implicitConversions
 
 class MountKAdminSpec extends MountKSpec(elevated = true)
-
 class MountKUserSpec extends MountKSpec(elevated = false)
 
 // Behavioral spec for mount-k.bat under the default PERSIST_MODE=always: argument parsing,
@@ -99,7 +98,8 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to `") and
+      (result.stdout has """drive mapped to `[^`]+\\base`""".r) and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -110,7 +110,8 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is already mounted to") and
+      (result.stdout has s"`$drive:` is already mounted to `") and
+      (result.stdout has """is already mounted to `[^`]+\\base`""".r) and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -124,7 +125,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)("/d")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -135,7 +136,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -145,7 +146,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: is not mounted via subst") and
+      (result.stdout has s"`$drive:` is not mounted via subst") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -174,7 +175,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val result = lease.runScript(script)("/?")
     result was SUCCESS and
       (result.stdout has "mount-") and
-      (result.stdout has s"v$version") and
+      (result.stdout has s"$version") and
       (result.stdout has "github.com/melezov/mount-k") and
       (result.stdout has "Usage:") and
       (result.stdout has """<no args>\s+-\s+same as /M \(mount\) since the filename defines the default action""".r) and
@@ -193,7 +194,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/M", "/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -206,7 +207,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/D", "/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -218,7 +219,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/D", "/D", "/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -230,7 +231,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/M", "/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -244,7 +245,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base", s"unmount-${drive.toLower}.bat")
     val result = lease.runScript(script)("/M", "/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -261,7 +262,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -276,7 +277,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.runScript(mountScript)(): Unit
     val result = lease.runScript(unmountScript)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -289,7 +290,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base", s"unmount-${drive.toLower}.bat")
     val result = lease.runScript(script)("/M")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -303,7 +304,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.runScript(mountScript)(): Unit
     val result = lease.runScript(unmountScript)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -313,7 +314,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base", s"unmount-${drive.toLower}.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is not mounted via subst") and
+      (result.stdout has s"`$drive:` is not mounted via subst") and
       result.stderr.isEmpty and
       (result.persisted hasNot drive) and
       (result.live hasNot drive)
@@ -335,7 +336,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("base", s"unmount-${drive.toLower}.bat")
     val result = lease.runScript(script)("/?")
     result was SUCCESS and
-      (result.stdout has s"v$version") and
+      (result.stdout has s"$version") and
       (result.stdout has "Usage:") and
       (result.stdout has s"Usage: unmount-${drive.toLower}.bat") and
       (result.stdout has """<no args>\s+-\s+same as /D \(unmount\) since the filename defines the default action""".r) and
@@ -356,8 +357,8 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
       (b was SUCCESS) and
       (a.live.underlying.get(drive) must beEqualTo(b.live.underlying.get(drive))) and
       (b.persisted(drive) must beEqualTo(a.persisted(drive))) and
-      (a.stdout has s"$drive: drive mapped to") and
-      (b.stdout has s"$drive: is already mounted to")
+      (a.stdout has s"`$drive:` drive mapped to") and
+      (b.stdout has s"`$drive:` is already mounted to")
   }
 
   // Strict A..Z parser: the script accepts ONLY the four canonical filename templates
@@ -466,8 +467,8 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
 
     viaFlag was SUCCESS and
       (viaName was SUCCESS) and
-      (viaFlag.stdout has s"$drive: drive unmounted") and
-      (viaName.stdout has s"$drive: drive unmounted") and
+      (viaFlag.stdout has s"`$drive:` drive unmounted") and
+      (viaName.stdout has s"`$drive:` drive unmounted") and
       (viaFlag.live hasNot drive) and
       (viaName.live hasNot drive) and
       (viaFlag.persisted hasNot drive) and
@@ -594,7 +595,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     resultBefore was SUCCESS and
       (resultBefore.live(drive) must beSome(contain("tmp"))) and
       (result was SUCCESS) and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -611,7 +612,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     lease.regDeleteValue(s"$drive:")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is already mounted to") and
+      (result.stdout has s"`$drive:` is already mounted to") and
       result.stderr.isEmpty and
       (result.persisted has drive) and
       (result.live(drive) must beSome(contain("base")))
@@ -662,7 +663,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
       substDelete(drive): Unit
       val result = lease.runScript(script)("/D")
       result was SUCCESS and
-        (result.stdout has s"$drive: is not mounted via subst") and
+        (result.stdout has s"`$drive:` is not mounted via subst") and
         result.stderr.isEmpty and
         (result.persisted hasNot drive) and
         (result.live hasNot drive) and
@@ -678,7 +679,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("lower", s"mount-${drive.toLower}.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive)
   }
@@ -687,7 +688,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo("upper", s"mount-$drive.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       result.stderr.isEmpty and
       (result.persisted has drive)
   }
@@ -758,7 +759,7 @@ abstract class MountKSpec(override val elevated: Boolean) extends ScriptSpec:
         val script = lease.copyScriptTo("real-volume", s"mount-$realLetter.bat")
         val result = lease.runScript(script)()
         result was ERROR_ALREADY_ASSIGNED and
-          (result.stderr has s"$realLetter: is already in use") and
+          (result.stderr has s"`$realLetter:` is already in use") and
           result.stdout.isEmpty and
           (result.persisted hasNot realLetter)
   }

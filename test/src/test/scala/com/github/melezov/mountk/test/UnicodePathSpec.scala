@@ -82,7 +82,7 @@ abstract class UnicodePathSpec(override val elevated: Boolean) extends ScriptSpe
       val expectedReg = s"\\??\\$expectedDir"
       val result = runWithRetry(lease, script, attempt = 1)
       result was SUCCESS and
-        (result.stdout has s"$drive: drive mapped to") and
+        (result.stdout has s"`$drive:` drive mapped to") and
         result.stderr.isEmpty and
         (result.persisted has drive) and
         (result.persisted(drive) must beSome(expectedReg))

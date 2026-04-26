@@ -36,7 +36,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       (result.stdout hasNot "registry") and
       result.stderr.isEmpty and
@@ -54,7 +54,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: is already mounted to") and
+      (result.stdout has s"`$drive:` is already mounted to") and
       (result.stdout hasNot "persisted") and
       (result.stdout hasNot "registry") and
       result.stderr.isEmpty and
@@ -66,7 +66,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     lease.runScript(script)(): Unit
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       (result.stdout hasNot "removed from registry") and
       (result.stdout hasNot "was not persisted") and
       result.stderr.isEmpty and
@@ -82,7 +82,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     val script = lease.copyScriptTo("base")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: is not mounted via subst") and
+      (result.stdout has s"`$drive:` is not mounted via subst") and
       (result.stdout hasNot "was not persisted") and
       (result.stdout hasNot "removed from registry") and
       result.stderr.isEmpty and
@@ -100,7 +100,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     lease.seedReg("preexisting-stale-value")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       result.stderr.isEmpty and
       (result.persisted(drive) must beSome("preexisting-stale-value"))
@@ -115,7 +115,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     lease.seedReg("preexisting-stale-value")
     val result = lease.runScript(script)("/D")
     result was SUCCESS and
-      (result.stdout has s"$drive: drive unmounted") and
+      (result.stdout has s"`$drive:` drive unmounted") and
       (result.stdout hasNot "removed from registry") and
       result.stderr.isEmpty and
       (result.persisted(drive) must beSome("preexisting-stale-value"))
@@ -131,7 +131,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     val result = lease.runScript(script)()
     result was SUCCESS and
       (result.stderr hasNot "Unsupported") and
-      (result.stdout has s"$drive: drive mapped to")
+      (result.stdout has s"`$drive:` drive mapped to")
   }
 
   private def suffixAfterDriveDowngradedToPlainMount = withDrive { (lease, drive) =>
@@ -143,7 +143,7 @@ class MountKPersistNeverSpec extends ScriptSpec:
     val script = lease.copyScriptTo("suf-after", s"mount-${drive.toLower}-and-remember.bat")
     val result = lease.runScript(script)()
     result was SUCCESS and
-      (result.stdout has s"$drive: drive mapped to") and
+      (result.stdout has s"`$drive:` drive mapped to") and
       (result.stdout hasNot "persisted") and
       (result.stdout hasNot "registry") and
       result.stderr.isEmpty and

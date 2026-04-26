@@ -25,6 +25,7 @@ class FormatSpec extends Specification with TestTimeouts:
     every recognized file ends with a newline                   $endsWithNewline
     .bat uses CRLF; all other recognized files use LF only      $correctLineEndings
     non-.txt/non-LICENSE recognized files are ASCII-only        $asciiOnly
+    no file starts with a UTF-8 byte-order mark                 $noBomMarker
     no line has trailing whitespace before its newline          $noTrailingWhitespace
     unrecognized file types (informational -- not a failure)    $reportUnrecognized
   """
@@ -59,6 +60,14 @@ class FormatSpec extends Specification with TestTimeouts:
       val (_, charset) = rulesFor(p).get
       if charset != US_ASCII then false
       else Files.readAllBytes(p).exists(b => (b & 0xff) > 0x7f)
+    }
+    offenders.map(rel) must beEmpty
+
+  private def noBomMarker =
+    val offenders = recognized.filter { p =>
+      val bytes = Files.readAllBytes(p)
+      bytes.length >= 3 &&
+        (bytes(0) & 0xff) == 0xEF && (bytes(1) & 0xff) == 0xBB && (bytes(2) & 0xff) == 0xBF
     }
     offenders.map(rel) must beEmpty
 
