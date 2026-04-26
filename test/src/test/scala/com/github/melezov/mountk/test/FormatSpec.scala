@@ -1,63 +1,26 @@
 package com.github.melezov.mountk
+package test
 
+import com.github.melezov.mountk.util.FormatRules
+import com.github.melezov.mountk.util.FormatRules.{rel, rulesFor}
 import org.specs2.Specification
 import org.specs2.execute.{Result, Skipped}
 import org.specs2.specification.core.SpecStructure
+import scribe.*
 
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.{ISO_8859_1, US_ASCII, UTF_8}
-import java.nio.file.{Files, Path}
-import scala.sys.process.*
+import java.nio.charset.StandardCharsets.{ISO_8859_1, US_ASCII}
+import java.nio.file.Files
 
-/** Validates repository-wide formatting rules */
-class FormatSpec extends Specification with ExampleTimeout:
+class FormatSpec extends Specification with TestTimeouts:
 
-  private val repoRoot: Path = scriptPath.getParent
+  lazy val (recognized, unrecognized) =
+    val (rec, unr) = FormatRules.listFilesByRecognition.partition(_._2)
+    (rec.map(_._1), unr.map(_._1))
 
-  private val rulesByExt = Map(
-    "bat"        -> ("\r\n", US_ASCII),
-    "md"         -> ("\n",   US_ASCII),
-    "properties" -> ("\n",   US_ASCII),
-    "sbt"        -> ("\n",   US_ASCII),
-    "scala"      -> ("\n",   US_ASCII),
-    "txt"        -> ("\n",   UTF_8),
-  )
-  private val rulesByName = Map(
-    ".editorconfig" -> ("\n", US_ASCII),
-    ".gitignore"    -> ("\n", US_ASCII),
-    "LICENSE"       -> ("\n", UTF_8),
-  )
+  info(s"FormatSpec: ${recognized.length} recognized, ${unrecognized.length} unrecognized")
 
-  // Binary blobs that git tracks but text-format rules don't apply to
-  private val binaryExts: Set[String] = Set("png")
-
-  private def isBinary(p: Path): Boolean =
-    binaryExts.contains(p.getFileName.toString.split('.').last.toLowerCase)
-
-  private def rulesFor(p: Path): Option[(String, Charset)] =
-    val name = p.getFileName.toString
-    rulesByName.get(name).orElse {
-      val dot = name.lastIndexOf('.')
-      if dot < 0 then None else rulesByExt.get(name.substring(dot + 1))
-    }
-
-  // `--cached --others --exclude-standard` = tracked + untracked-but-not-ignored
-  private val allFiles: List[Path] =
-    Process(Seq("git", "ls-files", "--cached", "--others", "--exclude-standard"), repoRoot.toFile)
-      .lazyLines.iterator
-      .map(line => repoRoot.resolve(line))
-      .filter(Files.isRegularFile(_))
-      .filterNot(isBinary)
-      .toList
-
-  private val (recognized, unrecognized) =
-    allFiles.partition(p => rulesFor(p).isDefined)
-
-  private def rel(p: Path): String = repoRoot.relativize(p).toString.replace('\\', '/')
-
-  println(s"FormatSpec: ${recognized.length} recognized, ${unrecognized.length} unrecognized")
-
-  override def is: SpecStructure = s2"""
+  override def is: SpecStructure =
+    s2"""
   repository file format
     every recognized file ends with a newline                   $endsWithNewline
     .bat uses CRLF; all other recognized files use LF only      $correctLineEndings
@@ -118,6 +81,6 @@ class FormatSpec extends Specification with ExampleTimeout:
       org.specs2.execute.Success("no unrecognized files")
     else
       Skipped(
-        "found file types not classified by FormatSpec; add them to rulesByExt/rulesByName " +
-        "or confirm they should be ignored:\n  " + unrecognized.map(rel).sorted.mkString("\n  ")
+        "found file types not classified by FormatRules; add them to rulesByExt/rulesByName " +
+          "or confirm they should be ignored:\n  " + unrecognized.map(rel).sorted.mkString("\n  ")
       )

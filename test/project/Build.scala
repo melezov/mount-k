@@ -1,6 +1,6 @@
 import sbt.*
 import sbt.Keys.*
-
+import sbt.nio.Keys.*
 import sbtbuildinfo.BuildInfoPlugin
 import sbtbuildinfo.BuildInfoPlugin.autoImport.*
 
@@ -20,10 +20,10 @@ object Build extends AutoPlugin {
 
   val unusedDrivesRangeProp = "mountk.test.unusedDrivesRange"
   val realDrivesRangeProp = "mountk.test.realDrivesRange"
-  val globalTimeoutSecProp = "mountk.test.globalTimeoutSec"
-  val perExampleTimeoutSecProp = "mountk.test.perExampleTimeoutSec"
-  val defaultGlobalTimeoutSec: Int = 5 * 60
-  val defaultPerExampleTimeoutSec: Int = 10
+  val globalTimeoutMsProp = "mountk.test.globalTimeoutMs"
+  val perExampleTimeoutMsProp = "mountk.test.perExampleTimeoutMs"
+  val defaultGlobalTimeoutMs: Int = 5 * 60 * 1000
+  val defaultPerExampleTimeoutMs: Int = 30 * 1000
 
   override def projectSettings: Seq[Def.Setting[?]] = BuildInfoPlugin.projectSettings ++ Seq(
     version := readVersionFromBat((ThisBuild / baseDirectory).value / ".." / "mount-k.bat"),
@@ -37,16 +37,16 @@ object Build extends AutoPlugin {
         sys.error(
           s"${unusedDrivesForTest.key.label} and ${existingRootAccessDriveForTest.key.label} must not overlap " +
           s"(shared: ${overlap.toSeq.sorted.mkString(", ")})")
-      // Wall-clock kill switch for the test JVM. Overridable via `sbt -Dmountk.test.globalTimeoutSec=NNN`;
+      // Wall-clock kill switch for the test JVM. Overridable via `sbt -Dmountk.test.globalTimeoutMs=NNN`;
       // default 5 min. Guarantees a deadlock can never lock up the whole harness.
-      val globalTimeoutSec = sys.props.getOrElse(globalTimeoutSecProp, defaultGlobalTimeoutSec)
-      // Per-example timeout enforced via specs2 AroundEach. Default 10s; override on command line.
-      val perExampleTimeoutSec = sys.props.getOrElse(perExampleTimeoutSecProp, defaultPerExampleTimeoutSec)
+      val globalTimeoutMs = sys.props.getOrElse(globalTimeoutMsProp, defaultGlobalTimeoutMs)
+      // Per-example timeout enforced via specs2 AroundEach. Default 30000ms; override on command line.
+      val perExampleTimeoutMs = sys.props.getOrElse(perExampleTimeoutMsProp, defaultPerExampleTimeoutMs)
       Seq(
         s"-D$unusedDrivesRangeProp=${mount.mkString}",
         s"-D$realDrivesRangeProp=${real.mkString}",
-        s"-D$globalTimeoutSecProp=$globalTimeoutSec",
-        s"-D$perExampleTimeoutSecProp=$perExampleTimeoutSec",
+        s"-D$globalTimeoutMsProp=$globalTimeoutMs",
+        s"-D$perExampleTimeoutMsProp=$perExampleTimeoutMs",
       )
     },
     Test / sourceGenerators += Def.task {
@@ -59,8 +59,11 @@ object Build extends AutoPlugin {
     }.taskValue,
   )
 
-  override def globalSettings: Seq[Def.Setting[?]] =
-    Seq(excludeLintKeys ++= Set(unusedDrivesForTest, existingRootAccessDriveForTest))
+  override def globalSettings: Seq[Def.Setting[?]] = Seq(
+    excludeLintKeys ++= Set(unusedDrivesForTest, existingRootAccessDriveForTest),
+    onChangedBuildSource := ReloadOnSourceChanges,
+    outputStrategy := Some(StdoutOutput),
+  )
 
   private val VersionPattern = """set "VERSION=(.+)"""".r
 

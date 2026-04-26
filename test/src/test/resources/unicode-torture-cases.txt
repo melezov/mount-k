@@ -297,4 +297,3 @@ test​‌‍⁠﻿dir_allzw
 
 # Mixed chaos - emoji plus RTL bidi plus Arabic combining marks
 🎭‍‫اَل‬_artchaos
-

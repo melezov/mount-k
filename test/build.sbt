@@ -12,6 +12,7 @@ scalacOptions ++= Seq(
 libraryDependencies ++= Seq(
   "net.java.dev.jna" %  "jna-platform" % "5.18.1" % Test,
   "org.specs2"       %% "specs2-core"  % "5.9.0"  % Test,
+  "com.outr"         %% "scribe"       % "3.19.0" % Test,
 )
 
 // Candidate drive letters the tests may subst to. The test JVM probes these at startup and enters
@@ -28,6 +29,7 @@ Test / fork := true
 Test / parallelExecution := true
 
 // Drops every live subst mapping and erases all prod & test registry entries
-addCommandAlias("cleanup", "Test/runMain com.github.melezov.mountk.Cleanup")
+addCommandAlias("cleanup", "Test/runMain com.github.melezov.mountk.util.Cleanup")
 
-Global / onChangedBuildSource := ReloadOnSourceChanges
+// Fixes newlines in source code
+addCommandAlias("reformat", "Test/runMain com.github.melezov.mountk.util.Reformat")

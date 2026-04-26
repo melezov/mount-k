@@ -1,7 +1,9 @@
 package com.github.melezov.mountk
+package test
 
 import org.specs2.execute.{Result, Skipped}
 import org.specs2.specification.core.{Fragments, SpecStructure}
+import scribe.*
 
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
@@ -10,16 +12,19 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
 class UnicodePathAdminSpec extends UnicodePathSpec(elevated = true)
+
 class UnicodePathUserSpec extends UnicodePathSpec(elevated = false)
 
-abstract class UnicodePathSpec(elevated: Boolean) extends ScriptSpec:
+abstract class UnicodePathSpec(override val elevated: Boolean) extends ScriptSpec:
 
   // Intra-spec parallelism: `args.execute(threadsNb = drives.length)` fans examples across whatever
   // the pool granted -- up to `parallelism` drives, falling back to fewer (and serial when 1) if the
   // pool is contended at startup.
   val parallelism = 4
 
-  private val extraEnv = if elevated then Seq("SKIP_ELEVATION" -> "1") else Seq.empty
+  // Pin PERSIST_MODE=always so registry assertions stay valid (script default is `if-suffixed`,
+  // which doesn't touch the registry for unsuffixed `mount-k.bat` filenames).
+  override protected def persistMode: Option[String] = Some("always")
 
   // ---------------------------------------------------------------------------
   //  File parsers (format: "# description\n" + "dir_name\n" + "\n")
@@ -53,9 +58,9 @@ abstract class UnicodePathSpec(elevated: Boolean) extends ScriptSpec:
   private val MaxRetryAttempts = 3
 
   @tailrec private def runWithRetry(lease: Lease, script: java.nio.file.Path, attempt: Int): RunResult =
-    val result = lease.runScript(script, extraEnv)()
+    val result = lease.runScript(script)()
     if result.exitCode == 31 && attempt < MaxRetryAttempts then
-      println(s"[retry] ${lease.drive}: exit 31 on attempt $attempt, retrying after ${100 * attempt}ms")
+      warn(s"[retry] ${lease.drive}: exit 31 on attempt $attempt, retrying after ${100 * attempt}ms")
       WinApi.substDelete(lease.drive): Unit
       Thread.sleep(100L * attempt)
       runWithRetry(lease, script, attempt + 1)
@@ -69,19 +74,18 @@ abstract class UnicodePathSpec(elevated: Boolean) extends ScriptSpec:
 
   private val testCounter = new AtomicInteger(0)
 
-  private def unicodePathCheck(dirNames: Seq[String]): Result = withDrive { lease =>
-    val drive = lease.drive
+  private def unicodePathCheck(dirNames: Seq[String]): Result = withDrive { (lease, drive) =>
     val subDir = dirNames.mkString("\\")
     try
       val script = lease.copyScriptTo(subDir)
       val expectedDir = script.getParent.toString
       val expectedReg = s"\\??\\$expectedDir"
       val result = runWithRetry(lease, script, attempt = 1)
-      (result.exitCode must beEqualTo(0)) and
-        (result.stdout must contain(s"$drive: drive mapped to")) and
-        (result.stderr must beEmpty) and
-        (result.registry must haveKey(s"$drive:")) and
-        (result.registry(s"$drive:") must beEqualTo(expectedReg))
+      result was SUCCESS and
+        (result.stdout has s"$drive: drive mapped to") and
+        result.stderr.isEmpty and
+        (result.persisted has drive) and
+        (result.persisted(drive) must beSome(expectedReg))
     catch
       case e: IOException => Skipped(s"OS rejected path: ${e.getMessage}")
   }

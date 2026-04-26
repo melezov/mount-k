@@ -1,18 +1,22 @@
 package com.github.melezov.mountk
+package test
 
-import com.github.melezov.mountk.WinApi.queryDosDevices
 import org.specs2.specification.core.SpecStructure
+import scribe.*
 
 import scala.language.implicitConversions
 
 class LongPathAdminSpec extends LongPathSpec(elevated = true)
+
 class LongPathUserSpec extends LongPathSpec(elevated = false)
 
-abstract class LongPathSpec(elevated: Boolean) extends ScriptSpec:
+abstract class LongPathSpec(override val elevated: Boolean) extends ScriptSpec:
 
   val parallelism = 2
 
-  private val extraEnv = if elevated then Seq("SKIP_ELEVATION" -> "1") else Seq.empty
+  // Pin PERSIST_MODE=always so registry-touching long-path assertions stay valid (script default
+  // `if-suffixed` is a no-op for plain `mount-x.bat` filenames used here).
+  override protected def persistMode: Option[String] = Some("always")
 
   // ---------------------------------------------------------------------------
   //  Path arithmetic
@@ -69,13 +73,13 @@ abstract class LongPathSpec(elevated: Boolean) extends ScriptSpec:
     val script = lease.copyScriptTo(subDir)
     val expectedDir = script.getParent.toString
     val expectedReg = s"\\??\\$expectedDir"
-    val result = lease.runScript(script, extraEnv)()
-    (result.exitCode must beEqualTo(0)) and
-      (result.stdout must contain(s"$drive: drive mapped to")) and
-      (result.stderr must beEmpty) and
-      (result.registry must haveKey(s"$drive:")) and
-      (result.registry(s"$drive:") must beEqualTo(expectedReg)) and
-      (queryDosDevices().get(drive) must beSome(contain(expectedDir)))
+    val result = lease.runScript(script)()
+    result was SUCCESS and
+      (result.stdout has s"$drive: drive mapped to") and
+      result.stderr.isEmpty and
+      (result.persisted has drive) and
+      (result.persisted(drive) must beSome(expectedReg)) and
+      (result.live(drive) must beSome(contain(expectedDir)))
 
   // ---------------------------------------------------------------------------
   //  Spec body
@@ -94,18 +98,18 @@ abstract class LongPathSpec(elevated: Boolean) extends ScriptSpec:
 
   // ---- long directory names ------------------------------------------------
 
-  private def longDirName = withDrive { lease =>
-    val available = subDirLenFor(lease.drive, MaxUsablePath)
+  private def longDirName = withDrive { (lease, drive) =>
+    val available = subDirLenFor(drive, MaxUsablePath)
     val len = Math.min(200, available)
     if len < 50 then
-      skipped(s"specRoot too long (overhead=${baseOverhead(lease.drive)}), only $len chars available for subDir")
+      skipped(s"specRoot too long (overhead=${baseOverhead(drive)}), only $len chars available for subDir")
     else
       longPathCheck(lease, singleDir(len))
   }
 
-  private def deepNesting = withDrive { lease =>
+  private def deepNesting = withDrive { (lease, drive) =>
     val subDir = (1 to 30).map(i => f"dn$i%02d").mkString("\\")
-    val fileLen = baseOverhead(lease.drive) + subDir.length
+    val fileLen = baseOverhead(drive) + subDir.length
     if fileLen > MaxUsablePath then
       skipped(s"30-level nesting needs $fileLen chars, exceeds MAX_PATH ($MaxUsablePath)")
     else
@@ -114,44 +118,41 @@ abstract class LongPathSpec(elevated: Boolean) extends ScriptSpec:
 
   // ---- MAX_PATH boundary ---------------------------------------------------
 
-  private def atMaxPathSingleDir = withDrive { lease =>
-    val drive = lease.drive
+  private def atMaxPathSingleDir = withDrive { (lease, drive) =>
     val available = subDirLenFor(drive, MaxUsablePath)
     if available < 1 then
       skipped(s"specRoot too long (overhead=${baseOverhead(drive)})")
     else if available > MaxNtfsComponent then
       skipped(s"subDir of $available chars exceeds single-component NTFS limit ($MaxNtfsComponent)")
     else
-      println(s"  atMaxPathSingleDir: dir name $available chars, file path ${baseOverhead(drive) + available}")
+      debug(s"atMaxPathSingleDir: dir name $available chars, file path ${baseOverhead(drive) + available}")
       longPathCheck(lease, singleDir(available))
   }
 
-  private def atMaxPathDeepNest = withDrive { lease =>
-    val drive = lease.drive
+  private def atMaxPathDeepNest = withDrive { (lease, drive) =>
     val available = subDirLenFor(drive, MaxUsablePath)
     if available < 3 then
       skipped(s"specRoot too long (overhead=${baseOverhead(drive)})")
     else
       val (subDir, depth) = deepNest(available)
-      println(s"  atMaxPathDeepNest: $depth levels, subDir ${subDir.length} chars, " +
+      debug(s"atMaxPathDeepNest: $depth levels, subDir ${subDir.length} chars, " +
         s"file path ${baseOverhead(drive) + subDir.length}")
       longPathCheck(lease, subDir)
   }
 
-  private def unmountAtMaxPath = withDrive { lease =>
-    val drive = lease.drive
+  private def unmountAtMaxPath = withDrive { (lease, drive) =>
     val available = subDirLenFor(drive, MaxUsablePath)
     if available < 1 then
       skipped(s"specRoot too long (overhead=${baseOverhead(drive)})")
     else
       val subDir = if available <= MaxNtfsComponent then singleDir(available, 'u')
-                   else deepNest(available)._1
+      else deepNest(available)._1
       val script = lease.copyScriptTo(subDir)
-      lease.runScript(script, extraEnv)(): Unit
-      val result = lease.runScript(script, extraEnv)("/D")
-      (result.exitCode must beEqualTo(0)) and
-        (result.stdout must contain(s"$drive: drive unmounted")) and
-        (result.stderr must beEmpty) and
-        (result.registry must not(haveKey(s"$drive:"))) and
-        (queryDosDevices() must not(haveKey(drive)))
+      lease.runScript(script)(): Unit
+      val result = lease.runScript(script)("/D")
+      result was SUCCESS and
+        (result.stdout has s"$drive: drive unmounted") and
+        result.stderr.isEmpty and
+        (result.persisted hasNot drive) and
+        (result.live hasNot drive)
   }
